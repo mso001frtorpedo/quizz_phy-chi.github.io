@@ -1,0 +1,765 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-T">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Physique-Chimie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Couleur de fond douce */
+        }
+        .quiz-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Bleu */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Gris */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+        .btn-green {
+            background-color: #10b981; /* Vert */
+            color: white;
+        }
+        .btn-green:hover {
+            background-color: #059669;
+        }
+        .btn-red {
+            background-color: #ef4444; /* Rouge */
+            color: white;
+        }
+        .btn-red:hover {
+            background-color: #dc2626;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            text-align: left;
+            background-color: #e5e7eb; /* Gris clair */
+            color: #1f2937; /* Gris foncé */
+        }
+        .option-btn:hover {
+            background-color: #d1d5db;
+        }
+        .option-btn.selected {
+            background-color: #93c5fd; /* Bleu clair sélectionné */
+            color: #1e40af;
+        }
+        .correct-answer {
+            background-color: #d1fae5 !important; /* Vert clair pour correct */
+            color: #065f46 !important;
+            border: 2px solid #6ee7b7;
+        }
+        .incorrect-answer {
+            background-color: #fee2e2 !important; /* Rouge clair pour incorrect */
+            color: #991b1b !important;
+            border: 2px solid #fca5a5;
+        }
+        .feedback {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .feedback-correct {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border-left: 5px solid #10b981;
+        }
+        .feedback-incorrect {
+            background-color: #fff1f2;
+            color: #9f1239;
+            border-left: 5px solid #ef4444;
+        }
+        .explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9fafb; /* Gris très clair */
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        #statsView table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        #statsView th, #statsView td {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: left;
+        }
+        #statsView th {
+            background-color: #f3f4f6;
+        }
+        .nav-button {
+            margin: 5px;
+        }
+        /* Styles pour les messages modaux */
+        .modal {
+            display: none; /* Caché par défaut */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5); /* Fond semi-transparent */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .modal-close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-close-btn:hover,
+        .modal-close-btn:focus {
+            color: black;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">Quiz de Physique-Chimie</h1>
+
+        <div class="text-center mb-6">
+            <button id="showQuizSelectionBtn" class="btn btn-primary nav-button">Commencer le Quiz</button>
+            <button id="showStatsBtn" class="btn btn-secondary nav-button">Voir les Statistiques</button>
+        </div>
+
+        <div id="quizSelectionView">
+            <h2 class="text-2xl font-semibold mb-4 text-center">Choisissez un sujet :</h2>
+            <div id="topicSelectionButtons" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </div>
+
+        <div id="quizView" class="hidden">
+            <h2 id="quizTopicTitle" class="text-2xl font-semibold mb-4 text-center"></h2>
+            <p id="questionCounter" class="text-md text-gray-600 mb-3 text-center"></p>
+            
+            <div id="questionArea" class="mb-4">
+                <p id="questionText" class="text-lg font-medium mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"></p>
+                <div id="optionsContainer">
+                    </div>
+            </div>
+
+            <div id="feedbackArea" class="mb-4"></div>
+            <div id="explanationArea" class="mb-4 hidden"></div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-6">
+                <button id="submitAnswerBtn" class="btn btn-primary w-full sm:w-auto">Valider la réponse</button>
+                <button id="nextQuestionBtn" class="btn btn-green w-full sm:w-auto hidden">Question Suivante</button>
+                <button id="generateNewQuestionsBtn" class="btn btn-secondary w-full sm:w-auto">Nouvelles Questions</button>
+            </div>
+             <button id="backToTopicsBtnQuiz" class="btn btn-secondary w-full mt-4">Retour aux Sujets</button>
+        </div>
+
+        <div id="statsView" class="hidden">
+            <h2 class="text-2xl font-semibold mb-6 text-center">Statistiques</h2>
+            
+            <div class="mb-6">
+                <label for="statsTopicSelect" class="block text-sm font-medium text-gray-700 mb-1">Afficher les statistiques pour :</label>
+                <select id="statsTopicSelect" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </select>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-3">Résumé Global</h3>
+            <div class="overflow-x-auto mb-6">
+                <table id="overallStatsTable" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Sujet</th>
+                            <th>Bonnes Réponses</th>
+                            <th>Mauvaises Réponses</th>
+                            <th>Tentatives Totales</th>
+                            <th>% Réussite</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h3 id="dailyStatsTitle" class="text-xl font-semibold mb-3">Statistiques Journalières pour <span id="selectedTopicNameStats"></span></h3>
+            <div class="overflow-x-auto mb-6">
+                <table id="dailyStatsTable" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bonnes Réponses</th>
+                            <th>Mauvaises Réponses</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <h3 id="evolutionChartTitle" class="text-xl font-semibold mb-3">Évolution des Réussites pour <span id="selectedTopicNameChart"></span></h3>
+            <div class="mb-6 p-4 border rounded-lg bg-white shadow">
+                <canvas id="statsChart"></canvas>
+            </div>
+
+            <div class="mt-8 p-6 border border-red-300 rounded-lg bg-red-50">
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Réinitialiser les Statistiques</h3>
+                <p class="text-sm text-gray-600 mb-3">Attention : Ceci effacera toutes les données de progression.</p>
+                <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                    <input type="password" id="resetCodeInput" placeholder="Code de réinitialisation (1970)" class="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 flex-grow">
+                    <button id="resetStatsBtn" class="btn btn-red w-full sm:w-auto">Réinitialiser</button>
+                </div>
+                <p id="resetStatusMessage" class="mt-2 text-sm"></p>
+            </div>
+            <button id="backToTopicsBtnStats" class="btn btn-secondary w-full mt-6">Retour aux Sujets</button>
+        </div>
+    </div>
+
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeModal()">&times;</span>
+            <p id="modalMessageText" class="text-lg"></p>
+            <button id="modalOkButton" class="btn btn-primary mt-4" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Définition des Questions ---
+        const allQuestions = {
+            "Masse": [
+                { question: "Quelle est l'unité principale de la masse dans le Système International ?", options: ["Le Gramme (g)", "Le Kilogramme (kg)", "La Tonne (t)", "Le Newton (N)"], correctAnswer: "Le Kilogramme (kg)", explanation: "L'unité de mesure 'officielle' de la masse dans le Système international est le kilogramme (kg)." },
+                { question: "Comment mesure-t-on la masse d'un objet ?", options: ["Avec un thermomètre", "Avec une balance", "Avec une règle", "Avec un chronomètre"], correctAnswer: "Avec une balance", explanation: "On mesure la masse avec une balance." },
+                { question: "Combien de grammes y a-t-il dans 1 kilogramme ?", options: ["10 g", "100 g", "1000 g", "0.001 g"], correctAnswer: "1000 g", explanation: "1 kilogramme (kg) est égal à 1000 grammes (g)." },
+                { question: "Qu'est-ce que la masse représente principalement ?", options: ["Le volume d'un objet", "La quantité de matière dans un objet", "La température d'un objet", "La forme d'un objet"], correctAnswer: "La quantité de matière dans un objet", explanation: "La masse est simplement la quantité de matière contenue dans un objet." },
+                { question: "Si un objet A contient plus de matière qu'un objet B de même taille, quel objet a la plus grande masse ?", options: ["Objet B", "Les deux ont la même masse", "Objet A", "Impossible à dire"], correctAnswer: "Objet A", explanation: "Plus un objet a de 'choses' qui le composent (matière), plus sa masse est grande." }
+            ],
+            "Densité": [
+                { question: "Quelle est la densité de référence de l'eau pure ?", options: ["0", "1", "10", "100"], correctAnswer: "1", explanation: "La densité de l'eau pure est de d = 1. C'est la référence pour comparer." },
+                { question: "Si un matériau a une densité de 0.8, va-t-il couler ou flotter dans l'eau ?", options: ["Il va couler", "Il va flotter", "Il va se dissoudre", "Il va rester entre deux eaux"], correctAnswer: "Il va flotter", explanation: "Si un matériau a une densité inférieure à 1 (comme 0.8), il est moins dense que l'eau et il flotte." },
+                { question: "L'aluminium, avec une densité de 2,7, coule-t-il dans l'eau ?", options: ["Oui", "Non", "Parfois", "Seulement si l'eau est salée"], correctAnswer: "Oui", explanation: "L'aluminium a une densité de 2,7. Comme 2,7 est plus grand que 1, l'aluminium est plus dense que l'eau et coule." },
+                { question: "Quel exemple de matériau qui flotte sur l'eau est donné dans le texte ?", options: ["Un clou en fer", "Du miel", "Du liège", "De l'aluminium"], correctAnswer: "Du liège", explanation: "Le liège a une densité de 0,2. Comme 0,2 est plus petit que 1, le liège flotte sur l'eau." },
+                { question: "Parmi les suivants, lequel est généralement plus dense que l'eau ?", options: ["L'huile", "Le bois de sapin", "Le miel", "Le polystyrène"], correctAnswer: "Le miel", explanation: "Le miel est plus dense que l'eau et a tendance à couler au fond." }
+            ],
+            "Conductivité Électrique": [
+                { question: "Comment appelle-t-on un matériau qui laisse bien passer le courant électrique ?", options: ["Un isolant électrique", "Un conducteur électrique", "Un semi-conducteur", "Un résistor"], correctAnswer: "Un conducteur électrique", explanation: "Un matériau qui laisse bien passer le courant est un bon conducteur électrique." },
+                { question: "Le bois sec est-il un bon conducteur électrique ?", options: ["Oui, très bon", "Oui, moyennement", "Non, c'est un isolant", "Seulement s'il est peint"], correctAnswer: "Non, c'est un isolant", explanation: "Le bois, le plastique et le carton sont des isolants électriques." },
+                { question: "Quel métal est couramment utilisé dans les fils électriques pour sa bonne conductivité ?", options: ["L'aluminium", "L'or", "Le cuivre", "Le plomb"], correctAnswer: "Le cuivre", explanation: "Le cuivre est un très bon conducteur électrique, c'est pourquoi il est utilisé dans les fils électriques." },
+                { question: "Si l'on insère un isolant électrique dans un circuit simple avec une lampe, que se passe-t-il ?", options: ["La lampe brille plus fort", "La lampe s'allume normalement", "La lampe ne s'allume pas", "La pile surchauffe"], correctAnswer: "La lampe ne s'allume pas", explanation: "Si la lampe ne s'allume pas, le courant est bloqué : le matériau testé est un isolant." },
+                { question: "Pourquoi les gaines des fils électriques sont-elles souvent en plastique ?", options: ["Pour la couleur", "Pour isoler du courant et éviter les chocs", "Pour que les fils soient plus souples", "Pour les rendre moins chers"], correctAnswer: "Pour isoler du courant et éviter les chocs", explanation: "Les fils électriques sont recouverts de plastique (un isolant) pour vous isoler du courant." }
+            ],
+            "Conductivité Thermique": [
+                { question: "Qu'est-ce qu'un bon conducteur thermique ?", options: ["Un matériau qui bloque la chaleur", "Un matériau qui laisse bien passer la chaleur", "Un matériau qui change de couleur avec la chaleur", "Un matériau qui produit de la chaleur"], correctAnswer: "Un matériau qui laisse bien passer la chaleur", explanation: "Un matériau qui laisse bien passer la chaleur est un bon conducteur thermique." },
+                { question: "Les métaux sont-ils généralement de bons ou de mauvais conducteurs thermiques ?", options: ["Mauvais conducteurs", "Bons conducteurs", "Neutres", "Ça dépend du métal"], correctAnswer: "Bons conducteurs", explanation: "Les métaux sont généralement de bons conducteurs thermiques (pense aux casseroles !)." },
+                { question: "Pourquoi les manches de certaines casseroles sont-ils en bois ou en plastique ?", options: ["Pour l'esthétique", "Parce que ce sont de bons conducteurs thermiques", "Parce que ce sont des isolants thermiques", "Parce qu'ils sont moins chers"], correctAnswer: "Parce que ce sont des isolants thermiques", explanation: "Le bois est un très bon isolant thermique. C'est pour ça que les manches de certaines casseroles sont en bois ou en plastique, pour ne pas se brûler." },
+                { question: "L'air est-il considéré comme un bon conducteur ou un bon isolant thermique ?", options: ["Bon conducteur", "Bon isolant", "Ni l'un ni l'autre", "Conducteur à haute température"], correctAnswer: "Bon isolant", explanation: "L'air aussi est un bon isolant thermique, c'est pourquoi on utilise des doubles vitrages aux fenêtres." },
+                { question: "Dans l'expérience avec la règle en métal, la cire et les clous, si la règle est un bon conducteur thermique, que se passe-t-il rapidement ?", options: ["La règle refroidit", "Les clous restent fixés", "La cire durcit", "Les clous tombent"], correctAnswer: "Les clous tombent", explanation: "Si la règle est un bon conducteur thermique, la chaleur va voyager vite, faire fondre la cire, et les clous vont tomber rapidement." }
+            ],
+            "Élasticité": [
+                { question: "Qu'est-ce que l'élasticité d'un matériau ?", options: ["Sa capacité à se casser facilement", "Sa capacité à changer de couleur", "Sa capacité à reprendre sa forme d'origine après déformation", "Sa capacité à conduire l'électricité"], correctAnswer: "Sa capacité à reprendre sa forme d'origine après déformation", explanation: "L'élasticité est la capacité d'un matériau à reprendre sa forme d'origine après avoir été déformé (étiré, tordu, écrasé...)." },
+                { question: "Un matériau qui reprend totalement sa forme après déformation est dit :", options: ["Rigide", "Plastique", "Parfaitement élastique", "Fragile"], correctAnswer: "Parfaitement élastique", explanation: "S'il reprend totalement sa forme, il est dit parfaitement élastique." },
+                { question: "Si un matériau reste un peu déformé après avoir été étiré, comment est-il qualifié ?", options: ["Totalement élastique", "Non élastique", "Partiellement élastique", "Très résistant"], correctAnswer: "Partiellement élastique", explanation: "S'il ne reprend sa forme que partiellement (il reste un peu déformé), il est dit partiellement élastique." },
+                { question: "Lequel de ces objets est un bon exemple de matériau très élastique ?", options: ["Une boule de pâte à modeler", "Un élastique en caoutchouc", "Une barre de fer", "Une feuille de papier"], correctAnswer: "Un élastique en caoutchouc", explanation: "Un élastique en caoutchouc reprend tout de suite sa forme de départ. L'élastique est très élastique." },
+                { question: "La pâte à modeler est-elle considérée comme un matériau élastique selon le texte ?", options: ["Oui, toujours", "Oui, si on la chauffe", "Non, elle garde la forme qu'on lui donne", "Seulement certains types"], correctAnswer: "Non, elle garde la forme qu'on lui donne", explanation: "La pâte à modeler n'est pas élastique ; elle garde la forme des empreintes." }
+            ],
+            "Magnétisme": [
+                { question: "Comment appelle-t-on les objets qui sont attirés par un aimant ?", options: ["Magnétiques", "Électriques", "Ferromagnétiques", "Non-métalliques"], correctAnswer: "Ferromagnétiques", explanation: "Les objets qui sont attirés ou repoussés par un aimant sont appelés ferromagnétiques." },
+                { question: "Lequel de ces matériaux est typiquement ferromagnétique ?", options: ["Le bois", "Le plastique", "Le fer", "Le cuivre"], correctAnswer: "Le fer", explanation: "Le fer est un métal très magnétique et donc ferromagnétique." },
+                { question: "Une gomme en caoutchouc est-elle attirée par un aimant ?", options: ["Oui, fortement", "Oui, faiblement", "Non", "Seulement si l'aimant est puissant"], correctAnswer: "Non", explanation: "La gomme n'est pas ferromagnétique et n'est pas attirée par un aimant." },
+                { question: "Que se passe-t-il si on approche un aimant d'un trombone en acier ?", options: ["Le trombone est repoussé", "Le trombone est attiré", "Rien ne se passe", "Le trombone devient chaud"], correctAnswer: "Le trombone est attiré", explanation: "Un trombone (souvent en acier, qui contient du fer) est attiré par un aimant car il est ferromagnétique." },
+                { question: "Le magnétisme implique-t-il toujours une attraction entre un aimant et un objet ?", options: ["Oui, toujours", "Non, il peut aussi y avoir répulsion", "Non, seulement une absence d'effet", "Oui, mais seulement avec les métaux"], correctAnswer: "Non, il peut aussi y avoir répulsion", explanation: "Certains objets sont attirés par l'aimant, d'autres sont repoussés (notamment entre aimants eux-mêmes), et d'autres ne réagissent pas." }
+            ]
+        };
+
+        // --- Variables Globales ---
+        let currentTopic = null;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let selectedAnswer = null;
+        let stats = JSON.parse(localStorage.getItem('quizPhysiqueChimieStats')) || {};
+        let statsChart = null;
+
+        // --- Éléments DOM ---
+        const quizSelectionView = document.getElementById('quizSelectionView');
+        const quizView = document.getElementById('quizView');
+        const statsView = document.getElementById('statsView');
+        
+        const topicSelectionButtonsContainer = document.getElementById('topicSelectionButtons');
+        const quizTopicTitle = document.getElementById('quizTopicTitle');
+        const questionCounterEl = document.getElementById('questionCounter');
+        const questionTextEl = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const explanationArea = document.getElementById('explanationArea');
+        
+        const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        const generateNewQuestionsBtn = document.getElementById('generateNewQuestionsBtn');
+        const backToTopicsBtnQuiz = document.getElementById('backToTopicsBtnQuiz');
+        
+        const showQuizSelectionBtn = document.getElementById('showQuizSelectionBtn');
+        const showStatsBtn = document.getElementById('showStatsBtn');
+        const backToTopicsBtnStats = document.getElementById('backToTopicsBtnStats');
+
+        const statsTopicSelect = document.getElementById('statsTopicSelect');
+        const overallStatsTableBody = document.getElementById('overallStatsTable').getElementsByTagName('tbody')[0];
+        const dailyStatsTableBody = document.getElementById('dailyStatsTable').getElementsByTagName('tbody')[0];
+        const dailyStatsTitle = document.getElementById('dailyStatsTitle');
+        const selectedTopicNameStats = document.getElementById('selectedTopicNameStats');
+        const evolutionChartTitle = document.getElementById('evolutionChartTitle');
+        const selectedTopicNameChart = document.getElementById('selectedTopicNameChart');
+        const resetCodeInput = document.getElementById('resetCodeInput');
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        const resetStatusMessage = document.getElementById('resetStatusMessage');
+
+        const messageModal = document.getElementById('messageModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+
+        // --- Fonctions ---
+
+        // Affichage des vues
+        function showView(viewToShow) {
+            quizSelectionView.classList.add('hidden');
+            quizView.classList.add('hidden');
+            statsView.classList.add('hidden');
+            viewToShow.classList.remove('hidden');
+        }
+
+        // Initialisation de l'application
+        function initializeApp() {
+            populateTopicSelection();
+            populateStatsTopicSelect();
+            showView(quizSelectionView);
+            loadStats(); // Charger et afficher les stats initiales
+        }
+
+        // Peupler la sélection des sujets
+        function populateTopicSelection() {
+            topicSelectionButtonsContainer.innerHTML = ''; // Vider les anciens boutons
+            Object.keys(allQuestions).forEach(topic => {
+                const button = document.createElement('button');
+                button.textContent = topic;
+                button.classList.add('btn', 'btn-primary', 'w-full', 'text-lg', 'py-3');
+                button.onclick = () => startQuiz(topic);
+                topicSelectionButtonsContainer.appendChild(button);
+            });
+        }
+        
+        // Mélanger un tableau (algorithme de Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Démarrer un quiz pour un sujet donné
+        function startQuiz(topic) {
+            currentTopic = topic;
+            currentQuestions = shuffleArray([...allQuestions[topic]]).slice(0, 5); // Prend 5 questions mélangées
+            currentQuestionIndex = 0;
+            selectedAnswer = null;
+            quizTopicTitle.textContent = `Quiz: ${topic}`;
+            showView(quizView);
+            displayQuestion();
+            generateNewQuestionsBtn.classList.remove('hidden');
+        }
+
+        // Afficher la question actuelle
+        function displayQuestion() {
+            feedbackArea.innerHTML = '';
+            explanationArea.classList.add('hidden');
+            explanationArea.innerHTML = '';
+            submitAnswerBtn.classList.remove('hidden');
+            nextQuestionBtn.classList.add('hidden');
+            submitAnswerBtn.disabled = true; // Désactivé jusqu'à ce qu'une option soit choisie
+
+            if (currentQuestionIndex < currentQuestions.length) {
+                const questionData = currentQuestions[currentQuestionIndex];
+                questionTextEl.textContent = questionData.question;
+                questionCounterEl.textContent = `Question ${currentQuestionIndex + 1} sur ${currentQuestions.length}`;
+                optionsContainer.innerHTML = '';
+                selectedAnswer = null; // Réinitialiser la sélection
+
+                questionData.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('btn', 'option-btn');
+                    button.dataset.value = option;
+                    button.onclick = () => selectOption(button, option);
+                    optionsContainer.appendChild(button);
+                });
+            } else {
+                // Fin du quiz pour ce sujet
+                const score = currentQuestions.filter(q => q.isCorrect).length;
+                showModalMessage(`Quiz pour "${currentTopic}" terminé ! Votre score : ${score} / ${currentQuestions.length}`);
+                quizTopicTitle.textContent = `Résultats pour ${currentTopic}`;
+                questionTextEl.textContent = `Vous avez terminé le quiz sur ${currentTopic}.`;
+                optionsContainer.innerHTML = '';
+                questionCounterEl.textContent = '';
+                submitAnswerBtn.classList.add('hidden');
+                nextQuestionBtn.classList.add('hidden');
+                // On pourrait ajouter un bouton pour retourner aux sujets ou voir les stats ici.
+            }
+        }
+        
+        function selectOption(buttonEl, optionValue) {
+            // Désélectionner les autres options
+            Array.from(optionsContainer.children).forEach(btn => btn.classList.remove('selected'));
+            // Sélectionner l'option cliquée
+            buttonEl.classList.add('selected');
+            selectedAnswer = optionValue;
+            submitAnswerBtn.disabled = false; // Activer le bouton Valider
+        }
+
+        // Valider la réponse
+        function handleSubmitAnswer() {
+            if (selectedAnswer === null) {
+                showModalMessage("Veuillez sélectionner une réponse.");
+                return;
+            }
+
+            const questionData = currentQuestions[currentQuestionIndex];
+            const isCorrect = selectedAnswer === questionData.correctAnswer;
+            questionData.isCorrect = isCorrect; // Stocker si la réponse était correcte pour le score final
+
+            feedbackArea.innerHTML = ''; // Nettoyer les feedbacks précédents
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.classList.add('feedback');
+
+            if (isCorrect) {
+                feedbackDiv.textContent = "Bonne réponse !";
+                feedbackDiv.classList.add('feedback-correct');
+            } else {
+                feedbackDiv.textContent = "Mauvaise réponse.";
+                feedbackDiv.classList.add('feedback-incorrect');
+            }
+            feedbackArea.appendChild(feedbackDiv);
+
+            explanationArea.innerHTML = `<p class="font-semibold">Explication :</p><p>${questionData.explanation}</p>`;
+            explanationArea.classList.remove('hidden');
+
+            // Mettre en évidence la bonne/mauvaise réponse
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true; // Désactiver les options après la réponse
+                if (btn.dataset.value === questionData.correctAnswer) {
+                    btn.classList.add('correct-answer');
+                } else if (btn.dataset.value === selectedAnswer && !isCorrect) {
+                    btn.classList.add('incorrect-answer');
+                }
+            });
+            
+            updateStats(currentTopic, isCorrect);
+
+            submitAnswerBtn.classList.add('hidden');
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+        // Passer à la question suivante
+        function handleNextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats(topic, isCorrect) {
+            if (!stats[topic]) {
+                stats[topic] = { dailyLogs: [] };
+            }
+
+            const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+            let todayLog = stats[topic].dailyLogs.find(log => log.date === today);
+
+            if (!todayLog) {
+                todayLog = { date: today, success: 0, failure: 0 };
+                stats[topic].dailyLogs.push(todayLog);
+            }
+
+            if (isCorrect) {
+                todayLog.success++;
+            } else {
+                todayLog.failure++;
+            }
+            saveStats();
+        }
+
+        function saveStats() {
+            localStorage.setItem('quizPhysiqueChimieStats', JSON.stringify(stats));
+            // Mettre à jour l'affichage des stats si la vue est active
+            if (!statsView.classList.contains('hidden')) {
+                renderAllStats();
+            }
+        }
+
+        function loadStats() {
+            stats = JSON.parse(localStorage.getItem('quizPhysiqueChimieStats')) || {};
+            // S'assurer que chaque sujet a une entrée dans les stats, même vide
+            Object.keys(allQuestions).forEach(topicName => {
+                if (!stats[topicName]) {
+                    stats[topicName] = { dailyLogs: [] };
+                }
+            });
+            if (!statsView.classList.contains('hidden')) { // Si la vue stats est active
+                 renderAllStats();
+            }
+        }
+        
+        function populateStatsTopicSelect() {
+            statsTopicSelect.innerHTML = ''; // Vider les options précédentes
+            Object.keys(allQuestions).forEach(topicName => {
+                const option = document.createElement('option');
+                option.value = topicName;
+                option.textContent = topicName;
+                statsTopicSelect.appendChild(option);
+            });
+             if (Object.keys(allQuestions).length > 0) {
+                statsTopicSelect.value = Object.keys(allQuestions)[0]; // Sélectionner le premier par défaut
+            }
+        }
+
+        function renderAllStats() {
+            renderOverallStatsTable();
+            const selectedTopic = statsTopicSelect.value || Object.keys(allQuestions)[0];
+            if (selectedTopic) {
+                 renderDailyStatsTable(selectedTopic);
+                 renderEvolutionChart(selectedTopic);
+                 selectedTopicNameStats.textContent = selectedTopic;
+                 selectedTopicNameChart.textContent = selectedTopic;
+            } else { // Aucun sujet, vider les tableaux/graphiques
+                dailyStatsTableBody.innerHTML = '<tr><td colspan="3">Aucun sujet sélectionné ou aucune donnée.</td></tr>';
+                if (statsChart) statsChart.destroy();
+                selectedTopicNameStats.textContent = "";
+                selectedTopicNameChart.textContent = "";
+            }
+        }
+        
+        statsTopicSelect.addEventListener('change', (event) => {
+            const selectedTopic = event.target.value;
+            renderDailyStatsTable(selectedTopic);
+            renderEvolutionChart(selectedTopic);
+            selectedTopicNameStats.textContent = selectedTopic;
+            selectedTopicNameChart.textContent = selectedTopic;
+        });
+
+
+        function renderOverallStatsTable() {
+            overallStatsTableBody.innerHTML = ''; // Vider le tableau
+            Object.keys(allQuestions).forEach(topic => {
+                const topicStats = stats[topic] || { dailyLogs: [] };
+                let totalSuccess = 0;
+                let totalFailure = 0;
+                topicStats.dailyLogs.forEach(log => {
+                    totalSuccess += log.success;
+                    totalFailure += log.failure;
+                });
+                const totalAttempts = totalSuccess + totalFailure;
+                const successRate = totalAttempts > 0 ? ((totalSuccess / totalAttempts) * 100).toFixed(1) : "0.0";
+
+                const row = overallStatsTableBody.insertRow();
+                row.insertCell().textContent = topic;
+                row.insertCell().textContent = totalSuccess;
+                row.insertCell().textContent = totalFailure;
+                row.insertCell().textContent = totalAttempts;
+                row.insertCell().textContent = `${successRate}%`;
+            });
+             if (overallStatsTableBody.rows.length === 0) {
+                const row = overallStatsTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = "Aucune donnée de statistique disponible.";
+                cell.style.textAlign = "center";
+            }
+        }
+
+        function renderDailyStatsTable(topic) {
+            dailyStatsTableBody.innerHTML = ''; // Vider le tableau
+            const topicStats = stats[topic];
+            if (topicStats && topicStats.dailyLogs.length > 0) {
+                // Trier les logs par date (plus récent en premier, optionnel)
+                const sortedLogs = [...topicStats.dailyLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                sortedLogs.forEach(log => {
+                    const row = dailyStatsTableBody.insertRow();
+                    row.insertCell().textContent = new Date(log.date).toLocaleDateString('fr-FR');
+                    row.insertCell().textContent = log.success;
+                    row.insertCell().textContent = log.failure;
+                });
+            } else {
+                const row = dailyStatsTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 3;
+                cell.textContent = "Aucune donnée journalière pour ce sujet.";
+                cell.style.textAlign = "center";
+            }
+        }
+
+        function renderEvolutionChart(topic) {
+            const topicStats = stats[topic];
+            const ctx = document.getElementById('statsChart').getContext('2d');
+
+            if (statsChart) {
+                statsChart.destroy(); // Détruire le graphique précédent s'il existe
+            }
+
+            if (topicStats && topicStats.dailyLogs.length > 0) {
+                const sortedLogs = [...topicStats.dailyLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                const labels = sortedLogs.map(log => new Date(log.date).toLocaleDateString('fr-FR'));
+                const successRates = sortedLogs.map(log => {
+                    const totalAttempts = log.success + log.failure;
+                    return totalAttempts > 0 ? (log.success / totalAttempts) * 100 : 0;
+                });
+
+                statsChart = new Chart(ctx, {
+                    type: 'line', // ou 'bar'
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `Taux de réussite pour ${topic} (%)`,
+                            data: successRates,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.1,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Taux de réussite (%)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                 // Afficher un message ou un graphique vide si pas de données
+                statsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: [], datasets: [] },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Aucune donnée pour afficher le graphique.'}
+                        }
+                    }
+                });
+            }
+        }
+        
+        function handleResetStats() {
+            const code = resetCodeInput.value;
+            if (code === "1970") {
+                stats = {};
+                 // Recréer les entrées vides pour chaque sujet après réinitialisation
+                Object.keys(allQuestions).forEach(topicName => {
+                    stats[topicName] = { dailyLogs: [] };
+                });
+                saveStats(); // Sauvegarder les stats vides
+                loadStats(); // Recharger pour que l'UI se mette à jour
+                resetStatusMessage.textContent = "Statistiques réinitialisées avec succès.";
+                resetStatusMessage.className = 'mt-2 text-sm text-green-600';
+                resetCodeInput.value = '';
+            } else {
+                resetStatusMessage.textContent = "Code de réinitialisation incorrect.";
+                resetStatusMessage.className = 'mt-2 text-sm text-red-600';
+            }
+        }
+
+        function showModalMessage(message) {
+            modalMessageText.textContent = message;
+            messageModal.style.display = "flex";
+        }
+
+        function closeModal() {
+            messageModal.style.display = "none";
+        }
+        
+        // --- Ajout des Event Listeners ---
+        showQuizSelectionBtn.addEventListener('click', () => {
+            populateTopicSelection(); // S'assurer que les boutons sont là
+            showView(quizSelectionView);
+        });
+        
+        showStatsBtn.addEventListener('click', () => {
+            loadStats(); // Charger les dernières stats
+            populateStatsTopicSelect(); // S'assurer que le select est peuplé
+            renderAllStats(); // Afficher toutes les sections de stats
+            showView(statsView);
+        });
+
+        backToTopicsBtnQuiz.addEventListener('click', () => showView(quizSelectionView));
+        backToTopicsBtnStats.addEventListener('click', () => showView(quizSelectionView));
+        
+        submitAnswerBtn.addEventListener('click', handleSubmitAnswer);
+        nextQuestionBtn.addEventListener('click', handleNextQuestion);
+        generateNewQuestionsBtn.addEventListener('click', () => {
+            if (currentTopic) {
+                startQuiz(currentTopic); // Redémarre le quiz pour le sujet actuel avec de nouvelles questions (mélangées)
+            } else {
+                showModalMessage("Veuillez d'abord sélectionner un sujet.");
+                showView(quizSelectionView);
+            }
+        });
+        resetStatsBtn.addEventListener('click', handleResetStats);
+
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+</body>
+</html>
