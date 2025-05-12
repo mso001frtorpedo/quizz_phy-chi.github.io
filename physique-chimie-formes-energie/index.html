@@ -1,0 +1,433 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Énergie Propre ! Quiz Interactif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Couleur de fond douce */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Aligner en haut pour voir le début du contenu */
+            min-height: 100vh;
+            padding-top: 20px; /* Ajouter de l'espace en haut */
+            padding-bottom: 20px; /* Ajouter de l'espace en bas */
+        }
+        .quiz-container {
+            max-width: 800px;
+            width: 95%; /* Utiliser la largeur en pourcentage pour la réactivité */
+            margin: 0 auto; /* Centrer horizontalement */
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 10px 15px; /* Ajuster le padding pour les petits écrans */
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem; /* Ajuster la taille de la police */
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Bleu */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Gris */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+        .btn-green {
+            background-color: #10b981; /* Vert */
+            color: white;
+        }
+        .btn-green:hover {
+            background-color: #059669;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            text-align: left;
+            background-color: #e5e7eb; /* Gris clair */
+            color: #1f2937; /* Gris foncé */
+        }
+        .option-btn:hover {
+            background-color: #d1d5db;
+        }
+        .option-btn.selected {
+            background-color: #93c5fd; /* Bleu clair sélectionné */
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+        }
+        .correct-answer {
+            background-color: #d1fae5 !important; /* Vert clair pour correct */
+            color: #065f46 !important;
+            border: 2px solid #6ee7b7;
+        }
+        .incorrect-answer {
+            background-color: #fee2e2 !important; /* Rouge clair pour incorrect */
+            color: #991b1b !important;
+            border: 2px solid #fca5a5;
+        }
+        .feedback {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .feedback-correct {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border-left: 5px solid #10b981;
+        }
+        .feedback-incorrect {
+            background-color: #fff1f2;
+            color: #9f1239;
+            border-left: 5px solid #ef4444;
+        }
+        .explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9fafb; /* Gris très clair */
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5); 
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .modal-close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb; /* bg-gray-200 */
+            border-radius: 9999px; /* rounded-full */
+            height: 1rem; /* h-4 */
+            margin-top: 0.75rem; /* mt-3 */
+            overflow: hidden; /* Pour s'assurer que la barre interne ne dépasse pas */
+        }
+        .progress-bar-fill {
+            background-color: #22c55e; /* bg-green-500 */
+            height: 1rem; /* h-4 */
+            border-radius: 9999px; /* rounded-full */
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            color: white; /* text-blue-100 - ajusté pour contraste */
+            text-align: center;
+            padding: 0.125rem; /* p-0.5 */
+            line-height: 1; /* leading-none */
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Styles pour les petits écrans */
+        @media (max-width: 640px) {
+            .quiz-container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem; /* text-2xl */
+            }
+            #quizTopicTitle {
+                 font-size: 1.25rem; /* text-xl */
+            }
+            .btn {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+            #questionText {
+                font-size: 0.95rem; /* text-md */
+            }
+            .feedback, .explanation {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4">
+
+    <div class="quiz-container">
+        <h1 class="text-2xl sm:text-3xl font-bold text-center mb-6 text-blue-700">Mission Énergie Propre !</h1>
+
+        <div id="storyArea" class="mb-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <p class="text-sm sm:text-base text-gray-700 mt-1">Vous êtes un(e) scientifique en herbe pour Néo-Veridia. Chaque bonne réponse nous rapproche d'un avenir durable !</p>
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar-fill" style="width: 0%;">
+                    0%
+                </div>
+            </div>
+            <p id="progressText" class="text-xs sm:text-sm text-green-700 font-semibold mt-1">Progrès : 0 / 10</p>
+        </div>
+
+        <div id="quizView">
+            <h2 id="quizTopicTitle" class="text-xl sm:text-2xl font-semibold mb-4 text-center text-blue-600">L'Énergie et ses Conversions</h2>
+            <p id="questionCounter" class="text-sm sm:text-md text-gray-600 mb-3 text-center"></p>
+            
+            <div id="questionArea" class="mb-4">
+                <p id="questionText" class="text-base sm:text-lg font-medium mb-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg"></p>
+                <div id="optionsContainer">
+                    </div>
+            </div>
+
+            <div id="feedbackArea" class="mb-4"></div>
+            <div id="explanationArea" class="mb-4 hidden"></div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
+                <button id="submitAnswerBtn" class="btn btn-primary w-full sm:w-auto">Valider la réponse</button>
+                <button id="nextQuestionBtn" class="btn btn-green w-full sm:w-auto hidden">Question Suivante</button>
+                <button id="generateNewQuestionsBtn" class="btn btn-secondary w-full sm:w-auto">Nouvelles Questions (10)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeModal()">&times;</span>
+            <p id="modalMessageText" class="text-lg"></p>
+            <button id="modalOkButton" class="btn btn-primary mt-4" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Définition des Questions ---
+        const questionsEnergie = {
+            easy: [
+                { question: "L'énergie peut-elle être créée ou détruite ?", options: ["Oui, elle peut être créée", "Non, elle se transforme", "Oui, elle peut être détruite", "Seulement dans les étoiles"], correctAnswer: "Non, elle se transforme", explanation: "Selon le principe fondamental de conservation de l'énergie, celle-ci ne peut être ni créée à partir de rien, ni disparaître. Elle se conserve en se transformant d'une forme (par exemple, chimique) en une ou plusieurs autres formes (par exemple, électrique et thermique). C'est ce qu'on appelle une conversion d'énergie." },
+                { question: "Citez une forme d'énergie liée à la vitesse d'un objet.", options: ["Énergie thermique", "Énergie cinétique", "Énergie chimique", "Énergie lumineuse"], correctAnswer: "Énergie cinétique", explanation: "L'énergie cinétique est spécifiquement la forme d'énergie qu'un objet possède lorsqu'il est en mouvement. Plus sa vitesse est élevée (et plus sa masse est grande), plus son énergie cinétique est importante." },
+                { question: "Qu'est-ce qu'un convertisseur d'énergie ?", options: ["Un appareil qui stocke l'énergie", "Un dispositif qui transforme une forme d'énergie en une ou plusieurs autres formes", "Un appareil qui mesure l'énergie", "Une source d'énergie primaire"], correctAnswer: "Un dispositif qui transforme une forme d'énergie en une ou plusieurs autres formes", explanation: "Un convertisseur d'énergie est un système ou un appareil qui a la capacité de prendre une forme d'énergie entrante (par exemple, l'énergie chimique d'une pile) et de la transformer en une ou plusieurs autres formes d'énergie en sortie (par exemple, énergie électrique et énergie thermique pour la pile)." },
+                { question: "Le vent est-il une source d'énergie renouvelable ou non renouvelable ?", options: ["Renouvelable", "Non renouvelable", "Les deux", "Ni l'un ni l'autre"], correctAnswer: "Renouvelable", explanation: "Le vent est classé comme une ressource énergétique renouvelable. Cela signifie qu'il est naturellement reconstitué et disponible de manière continue ou cyclique à l'échelle du temps humain, contrairement aux ressources non renouvelables qui s'épuisent." },
+                { question: "Quelle forme d'énergie est liée à la température d'un objet ?", options: ["Énergie cinétique", "Énergie thermique", "Énergie de pesanteur", "Énergie nucléaire"], correctAnswer: "Énergie thermique", explanation: "L'énergie thermique, souvent appelée chaleur, est directement associée à la température d'un objet. Elle résulte de l'agitation des particules (atomes ou molécules) qui composent cet objet. Plus l'agitation est grande, plus la température et l'énergie thermique sont élevées." },
+                { question: "L'énergie contenue dans les espèces chimiques est appelée :", options: ["Énergie nucléaire", "Énergie chimique", "Énergie électrique", "Énergie de pesanteur"], correctAnswer: "Énergie chimique", explanation: "L'énergie chimique est une forme d'énergie potentielle stockée dans les liaisons entre les atomes et les molécules. Elle peut être libérée ou absorbée lors de réactions chimiques, comme la combustion du bois ou le fonctionnement d'une pile." }
+            ],
+            medium: [
+                { question: "Quelle forme d'énergie est principalement stockée dans le pétrole ?", options: ["Énergie nucléaire", "Énergie cinétique", "Énergie chimique", "Énergie de pesanteur"], correctAnswer: "Énergie chimique", explanation: "Le pétrole, tout comme le charbon et le gaz naturel, est une source d'énergie fossile. L'énergie qu'il contient est principalement sous forme chimique, stockée dans les liaisons moléculaires de ses hydrocarbures. Cette énergie est libérée, notamment sous forme de chaleur, lors de sa combustion dans les centrales thermiques à flamme." },
+                { question: "Dans une centrale hydroélectrique, l'énergie de l'eau stockée en altitude dans un barrage est principalement de quelle forme avant sa chute ?", options: ["Énergie thermique", "Énergie lumineuse", "Énergie de pesanteur", "Énergie électrique"], correctAnswer: "Énergie de pesanteur", explanation: "L'eau retenue en altitude dans un barrage possède une énergie potentielle de pesanteur. Cette énergie est due à sa position élevée par rapport au niveau de la turbine. Plus la hauteur de chute est importante, plus cette énergie de pesanteur initiale est grande." },
+                { question: "Quel dispositif transforme l'énergie cinétique de l'eau ou du vent en énergie mécanique dans de nombreuses centrales ?", options: ["Panneau solaire", "Turbine", "Batterie", "Réacteur"], correctAnswer: "Turbine", explanation: "Dans de nombreuses centrales électriques comme les centrales hydroélectriques (eau) ou les éoliennes (vent), une turbine joue un rôle crucial. Ce dispositif rotatif est conçu pour capter l'énergie cinétique du fluide en mouvement (eau ou air) et la convertir en énergie mécanique de rotation. Cet arbre en rotation entraîne ensuite l'alternateur." },
+                { question: "Une pile électrique convertit principalement quelle forme d'énergie en énergie électrique ?", options: ["Énergie lumineuse", "Énergie thermique", "Énergie mécanique", "Énergie chimique"], correctAnswer: "Énergie chimique", explanation: "Une pile électrique fonctionne comme un convertisseur d'énergie. Elle stocke de l'énergie sous forme chimique grâce aux substances qu'elle contient. Lorsque la pile est utilisée dans un circuit, des réactions chimiques internes libèrent cette énergie et la transforment principalement en énergie électrique, qui permet d'alimenter des appareils. Une partie est aussi convertie en énergie thermique (la pile chauffe)." },
+                { question: "Quel type de centrale électrique utilise l'uranium comme ressource principale ?", options: ["Centrale photovoltaïque", "Centrale éolienne", "Centrale nucléaire", "Centrale géothermique"], correctAnswer: "Centrale nucléaire", explanation: "Les centrales nucléaires sont des installations qui produisent de l'électricité en utilisant la chaleur dégagée par la fission des noyaux d'atomes lourds. L'uranium est le combustible le plus couramment utilisé dans ces réacteurs nucléaires. C'est une ressource non renouvelable." },
+                { question: "Laquelle de ces ressources énergétiques est considérée comme non renouvelable ?", options: ["Le soleil", "L'eau (pour l'hydroélectricité)", "Le charbon", "La chaleur de la Terre (géothermie)"], correctAnswer: "Le charbon", explanation: "Le charbon est classé comme une ressource énergétique non renouvelable. Cela signifie que ses gisements se sont formés sur des millions d'années et que les quantités disponibles sur Terre sont limitées. Une fois extrait et consommé, il ne peut pas être régénéré à une vitesse comparable à celle de sa consommation par l'homme." }
+            ],
+            hard: [
+                { question: "Quelle est la conversion d'énergie principale dans un panneau solaire photovoltaïque ?", options: ["Énergie thermique en électrique", "Énergie lumineuse en électrique", "Énergie chimique en électrique", "Énergie nucléaire en électrique"], correctAnswer: "Énergie lumineuse en électrique", explanation: "Un panneau solaire photovoltaïque est un convertisseur d'énergie qui exploite l'effet photovoltaïque. Il transforme directement l'énergie lumineuse provenant du soleil (photons) en énergie électrique (courant continu). C'est une conversion directe sans pièces mobiles ni combustion." },
+                { question: "Quel est le rôle principal d'un alternateur dans la plupart des centrales électriques (hydroélectrique, thermique, éolienne, nucléaire) ?", options: ["Augmenter la température de l'eau", "Stocker l'énergie électrique produite", "Convertir l'énergie mécanique de rotation en énergie électrique", "Convertir l'énergie chimique en énergie thermique"], correctAnswer: "Convertir l'énergie mécanique de rotation en énergie électrique", explanation: "L'alternateur est un composant essentiel dans la majorité des centrales électriques (hydroélectriques, thermiques à flamme, nucléaires, éoliennes). Son rôle fondamental est de convertir l'énergie mécanique de rotation, fournie par une turbine (mise en mouvement par de l'eau, de la vapeur ou le vent), en énergie électrique sous forme de courant alternatif, qui peut ensuite être transporté par le réseau électrique." },
+                { question: "Selon le document fourni, quelle source d'énergie représentait la plus grande part de la production d'électricité en France en 2013 ?", options: ["Énergies renouvelables (eau, solaire, éolien)", "Gaz naturel, pétrole, charbon", "Uranium (centrales nucléaires)", "Autres sources non spécifiées"], correctAnswer: "Uranium (centrales nucléaires)", explanation: "D'après le document présentant les parts des différentes ressources énergétiques en France en 2013, l'uranium, utilisé dans les centrales nucléaires, constituait la source prédominante pour la production d'électricité, représentant 73% du total. Les autres sources étaient le gaz naturel/pétrole/charbon (8%), l'hydraulique (14%), et les autres renouvelables (5%)." },
+                { question: "Quel est le point commun essentiel dans le fonctionnement de la plupart des centrales électriques (thermique, nucléaire, hydroélectrique, éolienne) pour produire de l'électricité, impliquant souvent une turbine ?", options: ["La combustion d'un matériau fossile", "La fission d'atomes", "La conversion d'énergie lumineuse", "La mise en rotation d'un alternateur par une source d'énergie primaire via une turbine (ou équivalent)"], correctAnswer: "La mise en rotation d'un alternateur par une source d'énergie primaire via une turbine (ou équivalent)", explanation: "Un grand nombre de centrales électriques (comme les centrales thermiques, nucléaires, hydroélectriques et éoliennes) partagent un principe de fonctionnement commun pour générer de l'électricité. Elles utilisent une source d'énergie primaire (chaleur de combustion, chaleur de fission nucléaire, force de l'eau, force du vent) pour mettre en mouvement une turbine (ou des pales dans le cas des éoliennes). Cette turbine, en tournant, entraîne un alternateur qui convertit cette énergie mécanique de rotation en énergie électrique. Les centrales photovoltaïques sont une exception notable, car elles convertissent directement la lumière en électricité." }
+            ]
+        };
+
+        // --- Variables Globales ---
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let selectedAnswer = null;
+        let score = 0;
+        const TOTAL_QUESTIONS_PER_QUIZ = 10;
+        const NUM_EASY = 4;
+        const NUM_MEDIUM = 4;
+        const NUM_HARD = 2; // NUM_EASY + NUM_MEDIUM + NUM_HARD doit être égal à TOTAL_QUESTIONS_PER_QUIZ
+
+        // --- Éléments DOM ---
+        const questionCounterEl = document.getElementById('questionCounter');
+        const questionTextEl = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const explanationArea = document.getElementById('explanationArea');
+        
+        const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        const generateNewQuestionsBtn = document.getElementById('generateNewQuestionsBtn');
+        
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        const messageModal = document.getElementById('messageModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+
+        // --- Fonctions ---
+
+        // Mélanger un tableau (algorithme de Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Démarrer ou redémarrer un quiz
+        function startQuiz() {
+            score = 0;
+            currentQuestionIndex = 0;
+            selectedAnswer = null;
+            
+            // Sélectionner les questions par difficulté
+            let easySelected = shuffleArray([...questionsEnergie.easy]).slice(0, NUM_EASY);
+            let mediumSelected = shuffleArray([...questionsEnergie.medium]).slice(0, NUM_MEDIUM);
+            let hardSelected = shuffleArray([...questionsEnergie.hard]).slice(0, NUM_HARD);
+            
+            currentQuestions = [...easySelected, ...mediumSelected, ...hardSelected];
+            // Optionnel: re-mélanger le lot final de 10 questions si on ne veut pas un ordre strict de difficulté
+            // currentQuestions = shuffleArray(currentQuestions); 
+            // Pour l'instant, on garde l'ordre progressif.
+
+            updateProgressBar();
+            displayQuestion();
+            generateNewQuestionsBtn.classList.remove('hidden');
+        }
+
+        // Afficher la question actuelle
+        function displayQuestion() {
+            feedbackArea.innerHTML = '';
+            explanationArea.classList.add('hidden');
+            explanationArea.innerHTML = '';
+            submitAnswerBtn.classList.remove('hidden');
+            submitAnswerBtn.disabled = true; 
+            nextQuestionBtn.classList.add('hidden');
+
+            if (currentQuestionIndex < currentQuestions.length) {
+                const questionData = currentQuestions[currentQuestionIndex];
+                questionTextEl.textContent = questionData.question;
+                questionCounterEl.textContent = `Question ${currentQuestionIndex + 1} sur ${TOTAL_QUESTIONS_PER_QUIZ}`;
+                optionsContainer.innerHTML = '';
+                selectedAnswer = null; 
+
+                // Mélanger les options pour cette question
+                const shuffledOptions = shuffleArray([...questionData.options]);
+
+                shuffledOptions.forEach((option) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('btn', 'option-btn');
+                    button.dataset.value = option; // Stocker la valeur originale de l'option
+                    button.onclick = () => selectOption(button, option);
+                    optionsContainer.appendChild(button);
+                });
+            } else {
+                // Fin du quiz
+                showModalMessage(`Mission accomplie pour cette session ! Votre score : ${score} / ${TOTAL_QUESTIONS_PER_QUIZ}. Prêt pour une nouvelle série de défis ?`);
+                questionTextEl.textContent = `Vous avez terminé cette série de ${TOTAL_QUESTIONS_PER_QUIZ} questions. Cliquez sur "Nouvelles Questions" pour recommencer !`;
+                optionsContainer.innerHTML = '';
+                questionCounterEl.textContent = `Score final : ${score} / ${TOTAL_QUESTIONS_PER_QUIZ}`;
+                submitAnswerBtn.classList.add('hidden');
+                nextQuestionBtn.classList.add('hidden');
+            }
+        }
+        
+        function selectOption(buttonEl, optionValue) {
+            Array.from(optionsContainer.children).forEach(btn => btn.classList.remove('selected'));
+            buttonEl.classList.add('selected');
+            selectedAnswer = optionValue;
+            submitAnswerBtn.disabled = false;
+        }
+
+        // Valider la réponse
+        function handleSubmitAnswer() {
+            if (selectedAnswer === null) {
+                showModalMessage("Veuillez sélectionner une réponse.");
+                return;
+            }
+
+            const questionData = currentQuestions[currentQuestionIndex];
+            const isCorrect = selectedAnswer === questionData.correctAnswer;
+
+            feedbackArea.innerHTML = ''; 
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.classList.add('feedback');
+
+            if (isCorrect) {
+                feedbackDiv.textContent = "Excellente réponse ! Vous progressez vers Néo-Veridia durable.";
+                feedbackDiv.classList.add('feedback-correct');
+                score++;
+            } else {
+                feedbackDiv.textContent = "Dommage, ce n'est pas la bonne réponse. Mais chaque erreur est une leçon !";
+                feedbackDiv.classList.add('feedback-incorrect');
+            }
+            feedbackArea.appendChild(feedbackDiv);
+
+            explanationArea.innerHTML = `<p class="font-semibold">Explication :</p><p>${questionData.explanation}</p>`;
+            explanationArea.classList.remove('hidden');
+
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true; 
+                if (btn.dataset.value === questionData.correctAnswer) {
+                    btn.classList.add('correct-answer');
+                } else if (btn.dataset.value === selectedAnswer && !isCorrect) {
+                    btn.classList.add('incorrect-answer');
+                }
+            });
+            
+            updateProgressBar();
+            submitAnswerBtn.classList.add('hidden');
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+        // Passer à la question suivante
+        function handleNextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function updateProgressBar() {
+            const percentage = (score / TOTAL_QUESTIONS_PER_QUIZ) * 100;
+            progressBar.style.width = `${percentage}%`;
+            progressBar.textContent = `${Math.round(percentage)}%`;
+            progressText.textContent = `Progrès : ${score} / ${TOTAL_QUESTIONS_PER_QUIZ}`;
+        }
+
+        function showModalMessage(message) {
+            modalMessageText.textContent = message;
+            messageModal.style.display = "flex";
+        }
+
+        function closeModal() {
+            messageModal.style.display = "none";
+        }
+        
+        // --- Ajout des Event Listeners ---
+        submitAnswerBtn.addEventListener('click', handleSubmitAnswer);
+        nextQuestionBtn.addEventListener('click', handleNextQuestion);
+        generateNewQuestionsBtn.addEventListener('click', startQuiz);
+
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', startQuiz);
+
+    </script>
+</body>
+</html>
